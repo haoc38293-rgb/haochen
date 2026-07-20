@@ -1,72 +1,60 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
-type Tier = "high" | "mid" | "low";
-type Word = { word:string; phonetic:string; meaning:string; note:string; example:string; translation:string; tier:Tier };
+type Vocab={w:string;p:string;t:string;d:string;f:number;b:number;x:string};
+type View="learn"|"reading"|"book"|"library";
 
-const TIERS: Record<Tier, { label:string; sub:string }> = {
-  high: { label:"高频词", sub:"优先掌握" },
-  mid: { label:"中频词", sub:"进阶积累" },
-  low: { label:"低频词", sub:"拓展提升" },
-};
+const ARTICLES=[
+  {tag:"成长 · B1",title:"The Courage to Begin",cn:"开始的勇气",text:"Every meaningful journey begins with a small decision. When Emma joined the school debate club, she was nervous and uncertain. She considered leaving after the first meeting, but her teacher encouraged her to stay. Through regular practice, she gradually learned to express her ideas clearly, listen to different opinions, and respond with confidence. The experience did not only improve her speaking skills. It also taught her that progress often appears when we are willing to face difficulty instead of avoiding it."},
+  {tag:"自然 · B1",title:"A Forest That Remembers",cn:"会记忆的森林",text:"Scientists have discovered that a forest is more connected than it may appear. Beneath the ground, the roots of different trees exchange water and important materials through a complex network. Older trees can provide support for younger ones, especially when sunlight is limited. This hidden system helps the whole forest adapt to change. It reminds us that strength does not always come from standing alone. Sometimes, survival depends on cooperation and the quiet connections around us."},
+  {tag:"科技 · B2",title:"Learning in a Digital Age",cn:"数字时代的学习",text:"Technology provides students with immediate access to a great amount of information. However, access alone does not guarantee real understanding. Learners still need to examine sources, compare different views, and consider whether an argument is reliable. A useful digital tool should encourage active thinking rather than replace it. When technology is used with a clear purpose, it can create new opportunities for education and help students become independent learners."},
+];
 
-const WORDS: Record<string, Word> = {
-  achieve:{word:"achieve",phonetic:"/əˈtʃiːv/",meaning:"v. 实现；取得",note:"高考语境中常与 goal、success、dream 搭配。",example:"Small steps can help us achieve a difficult goal.",translation:"小小的步伐能帮助我们实现困难的目标。",tier:"high"},
-  benefit:{word:"benefit",phonetic:"/ˈbenɪfɪt/",meaning:"n. 益处  v. 受益",note:"常见搭配：benefit from 从……中受益。",example:"Reading every day benefits both the mind and the heart.",translation:"每天阅读让思想和心灵都受益。",tier:"high"},
-  consider:{word:"consider",phonetic:"/kənˈsɪdər/",meaning:"v. 考虑；认为",note:"consider doing 表示“考虑做某事”。",example:"She considered joining the school debate team.",translation:"她考虑加入学校辩论队。",tier:"high"},
-  provide:{word:"provide",phonetic:"/prəˈvaɪd/",meaning:"v. 提供；供应",note:"provide sb. with sth. 或 provide sth. for sb.。",example:"The library provides students with a quiet place to study.",translation:"图书馆为学生提供安静的学习场所。",tier:"high"},
-  adapt:{word:"adapt",phonetic:"/əˈdæpt/",meaning:"v. 适应；改编",note:"adapt to 意为“适应”，强调随环境改变。",example:"It took him a month to adapt to his new school.",translation:"他花了一个月适应新学校。",tier:"mid"},
-  circumstance:{word:"circumstance",phonetic:"/ˈsɜːrkəmstæns/",meaning:"n. 情况；环境",note:"常用复数 under the circumstances，意为“在这种情况下”。",example:"Under the circumstances, waiting was the wisest choice.",translation:"在这种情况下，等待是最明智的选择。",tier:"mid"},
-  demonstrate:{word:"demonstrate",phonetic:"/ˈdemənstreɪt/",meaning:"v. 证明；展示",note:"写作中可替换 show，使表达更正式。",example:"The experiment demonstrates how light affects plants.",translation:"这个实验证明了光如何影响植物。",tier:"mid"},
-  encounter:{word:"encounter",phonetic:"/ɪnˈkaʊntər/",meaning:"v./n. 遇到；邂逅",note:"多指意外遇到问题、困难或某个人。",example:"We encountered several problems during the journey.",translation:"旅途中我们遇到了几个问题。",tier:"mid"},
-  coherent:{word:"coherent",phonetic:"/koʊˈhɪrənt/",meaning:"adj. 连贯的；条理清楚的",note:"常形容 argument、speech、plan 等有清晰逻辑。",example:"Her ideas were clear and formed a coherent argument.",translation:"她的想法清晰，构成了连贯的论证。",tier:"low"},
-  intricate:{word:"intricate",phonetic:"/ˈɪntrɪkət/",meaning:"adj. 错综复杂的；精细的",note:"强调由许多细小部分构成，理解或制作不容易。",example:"The artist drew an intricate pattern on the wall.",translation:"艺术家在墙上画了一个精细复杂的图案。",tier:"low"},
-  reluctant:{word:"reluctant",phonetic:"/rɪˈlʌktənt/",meaning:"adj. 不情愿的；勉强的",note:"be reluctant to do 表示“不愿意做某事”。",example:"He was reluctant to speak before the large audience.",translation:"他不愿在众多观众面前发言。",tier:"low"},
-  subtle:{word:"subtle",phonetic:"/ˈsʌtəl/",meaning:"adj. 微妙的；不易察觉的",note:"字母 b 不发音，常形容细微却重要的差别。",example:"There was a subtle change in the way she smiled.",translation:"她微笑的方式发生了微妙的变化。",tier:"low"},
-};
+const FUNCTION_WORDS:Record<string,{t:string;p?:string}>={a:{t:"art. 一个；一",p:"/ə/"},the:{t:"art. 这；那；这些；那些",p:"/ðə/"},to:{t:"prep. 向；到；不定式符号",p:"/tuː/"},of:{t:"prep. ……的",p:"/əv/"},and:{t:"conj. 和；并且",p:"/ænd/"},that:{t:"pron./conj. 那；那个；引导从句",p:"/ðæt/"},it:{t:"pron. 它",p:"/ɪt/"},her:{t:"pron. 她；她的",p:"/hɜːr/"},she:{t:"pron. 她",p:"/ʃiː/"},was:{t:"v. 是（be 的过去式）",p:"/wɒz/"},is:{t:"v. 是",p:"/ɪz/"},are:{t:"v. 是",p:"/ɑːr/"},with:{t:"prep. 和；具有；用",p:"/wɪð/"},when:{t:"adv./conj. 什么时候；当……时",p:"/wen/"},than:{t:"conj./prep. 比",p:"/ðæn/"},not:{t:"adv. 不；没有",p:"/nɒt/"},but:{t:"conj. 但是",p:"/bʌt/"},can:{t:"modal v. 能；可以",p:"/kæn/"},from:{t:"prep. 从；来自",p:"/frɒm/"},as:{t:"adv./conj./prep. 像；作为；当……时",p:"/æz/"}};
+const LOCAL_AUDIO=new Set(["achieve","adapt","benefit","circumstance","coherent","consider","demonstrate","encounter","intricate","provide","reluctant","subtle"]);
 
-const ORDER = Object.keys(WORDS);
-const TIER_IDS: Record<Tier,string[]> = { high:ORDER.slice(0,4), mid:ORDER.slice(4,8), low:ORDER.slice(8,12) };
-const PASSAGES: Record<Tier,{eyebrow:string;title:string;lines:React.ReactNode[];question:string;answer:string}> = {
-  high:{eyebrow:"高中闪过3500 · 高频阶段",title:"One step at a time",lines:[<>At the start of the term, Mia hoped to <Mark id="achieve" /> a better result in English.</>,<>Her teacher asked her to <Mark id="consider" /> reading for twenty minutes each day and <Mark id="provide" /> herself with a quiet place to focus.</>,<>Soon, she began to <Mark id="benefit" /> from this small but steady habit.</>],question:"What helped Mia make progress?",answer:"A simple daily reading habit and a quiet place to focus helped her."},
-  mid:{eyebrow:"高中闪过3500 · 中频阶段",title:"A new environment",lines:[<>When Leo moved to a new city, he needed time to <Mark id="adapt" /> to his surroundings.</>,<>He would often <Mark id="encounter" /> unfamiliar customs, but each experience helped him understand the local culture.</>,<>Even under difficult <Mark id="circumstance" />, his actions <Mark id="demonstrate" /> patience and curiosity.</>],question:"How did Leo respond to unfamiliar customs?",answer:"He stayed patient and curious, using each encounter to learn."},
-  low:{eyebrow:"高中闪过3500 · 低频阶段",title:"The hidden message",lines:[<>The old letter contained an <Mark id="intricate" /> drawing and a <Mark id="subtle" /> change in handwriting.</>,<>At first, Nora was <Mark id="reluctant" /> to share her theory, but she finally offered a <Mark id="coherent" /> explanation.</>],question:"Why did the letter seem unusual?",answer:"Its detailed drawing and subtle handwriting change suggested a hidden message."},
-};
+function normalize(raw:string,map:Map<string,Vocab>){
+  const w=raw.toLowerCase().replace(/[^a-z'-]/g,"");
+  if(map.has(w))return w;
+  const irregular:Record<string,string>={begins:"begin",joined:"join",was:"be",leaving:"leave",encouraged:"encourage",learned:"learn",taught:"teach",appears:"appear",avoiding:"avoid",scientists:"scientist",discovered:"discover",trees:"tree",older:"old",younger:"young",ones:"one",helps:"help",reminds:"remind",connections:"connection",provides:"provide",students:"student",learners:"learner",sources:"source",views:"view",depends:"depend",used:"use"};
+  if(irregular[w]&&map.has(irregular[w]))return irregular[w];
+  for(const s of ["ing","ied","ed","es","s"]){if(w.endsWith(s)){let root=w.slice(0,-s.length)+(s==="ied"?"y":"");if(map.has(root))return root;if(map.has(root+"e"))return root+"e";}}
+  return w;
+}
 
-function Mark({id}:{id:string}){ return <button className="word" data-word={id}>{WORDS[id].word}</button>; }
+function ClickableText({text,map,onWord}:{text:string;map:Map<string,Vocab>;onWord:(w:string)=>void}){
+  return <>{text.split(/([A-Za-z][A-Za-z'-]*)/g).map((part,i)=>/^[A-Za-z]/.test(part)?<button key={i} className="article-word" onClick={()=>onWord(normalize(part,map))}>{part}</button>:<span key={i}>{part}</span>)}</>;
+}
 
 export default function Home(){
-  const [tier,setTier]=useState<Tier>("high");
-  const [active,setActive]=useState("achieve");
-  const [saved,setSaved]=useState<string[]>([]);
-  const [known,setKnown]=useState<string[]>([]);
-  const [toast,setToast]=useState("");
-  const current=WORDS[active];
-  const passage=PASSAGES[tier];
-  const tierKnown=TIER_IDS[tier].filter(id=>known.includes(id)).length;
-  const progress=useMemo(()=>Math.round(known.length/ORDER.length*100),[known]);
+  const [words,setWords]=useState<Vocab[]>([]); const [view,setView]=useState<View>("learn");
+  const [active,setActive]=useState("achieve"); const [known,setKnown]=useState<string[]>([]); const [saved,setSaved]=useState<string[]>([]);
+  const [article,setArticle]=useState(0); const [query,setQuery]=useState(""); const [limit,setLimit]=useState(60); const [toast,setToast]=useState(""); const [loadingAudio,setLoadingAudio]=useState(false);
+  useEffect(()=>{fetch("/gaokao-vocab.json").then(r=>r.json()).then((d:Vocab[])=>{setWords(d);setActive(d[0]?.w||"achieve")});try{setKnown(JSON.parse(localStorage.getItem("yujing-known")||"[]"));setSaved(JSON.parse(localStorage.getItem("yujing-saved")||"[]"))}catch{}},[]);
+  useEffect(()=>{if(words.length){localStorage.setItem("yujing-known",JSON.stringify(known));localStorage.setItem("yujing-saved",JSON.stringify(saved))}},[known,saved,words.length]);
+  const map=useMemo(()=>new Map(words.map(w=>[w.w,w])),[words]); const item=map.get(active); const index=item?words.indexOf(item):0;
+  const stage=index<1200?"高频":index<2400?"中频":"低频"; const daily=words.slice(Math.floor(index/20)*20,Math.floor(index/20)*20+20);
+  const search=useMemo(()=>{const q=query.trim().toLowerCase();return (q?words.filter(w=>w.w.includes(q)||w.t.includes(query.trim())):words).slice(0,limit)},[words,query,limit]);
+  function selectWord(w:string){setActive(w);if(view!=="learn")setView("reading");}
+  function markKnown(){if(!known.includes(active))setKnown(k=>[...k,active]);const next=words[Math.min(index+1,words.length-1)];if(next)setActive(next.w);}
+  function toggleSaved(){setSaved(s=>s.includes(active)?s.filter(x=>x!==active):[...s,active]);setToast(saved.includes(active)?"已移出生词本":"已加入生词本");setTimeout(()=>setToast(""),1400)}
+  async function playAudio(){setLoadingAudio(true);try{if(LOCAL_AUDIO.has(active)){await new Audio(`/audio/${active}.mp3`).play();return}const r=await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${active}`);const d=await r.json();const url=d?.flatMap((e:{phonetics?:{audio?:string}[]})=>e.phonetics||[]).find((p:{audio?:string})=>p.audio)?.audio;if(!url)throw new Error();await new Audio(url).play()}catch{setToast("这个词暂无真人录音");setTimeout(()=>setToast(""),1600)}finally{setLoadingAudio(false)}}
+  const display=item|| (FUNCTION_WORDS[active]?{w:active,p:FUNCTION_WORDS[active].p||"",t:FUNCTION_WORDS[active].t,d:"文章中的常用功能词",f:0,b:0,x:""}:null);
 
-  function chooseTier(next:Tier){ setTier(next); setActive(TIER_IDS[next].find(id=>!known.includes(id))||TIER_IDS[next][0]); }
-  function capture(e:React.MouseEvent<HTMLElement>){ const el=(e.target as HTMLElement).closest<HTMLButtonElement>("[data-word]"); if(el?.dataset.word)setActive(el.dataset.word); }
-  function toggleSaved(){ setSaved(s=>s.includes(active)?s.filter(x=>x!==active):[...s,active]); setToast(saved.includes(active)?"已移出生词本":"已加入生词本"); setTimeout(()=>setToast(""),1500); }
-  function playRecording(){
-    const audio=new Audio(`/audio/${active}.mp3`);
-    audio.play().catch(()=>{ setToast("点按重试真人发音"); setTimeout(()=>setToast(""),1500); });
-  }
-  function markKnown(){
-    const updated=known.includes(active)?known:[...known,active]; setKnown(updated);
-    const i=ORDER.indexOf(active); const next=ORDER[(i+1)%ORDER.length]; setActive(next);
-    if(WORDS[next].tier!==tier) setTier(WORDS[next].tier);
-  }
-
-  return <main onClick={capture}>
-    <header className="topbar"><a className="brand" href="#top"><span>境</span> 语境</a><nav><a className="nav-active" href="#study">今日学习</a><a href="#words">生词本 <b>{saved.length}</b></a><a href="#roadmap">词频路径</a></nav><button className="streak"><i>✦</i> 12 天</button></header>
-    <section className="hero" id="top"><div className="hero-copy"><p className="kicker">高中闪过 3500 · 分频语境记忆</p><h1>先抓高频，再向深处。<br/><em>每个词，都在语境里记住。</em></h1><p className="subtitle">按高频 → 中频 → 低频依次学习，<br/>把最值得掌握的词放在最前面。</p></div><div className="today-card"><div className="ring" style={{"--progress":`${progress}%`} as React.CSSProperties}><span>{known.length}<small>/ 12</small></span></div><div><small>当前阶段</small><strong>{TIERS[tier].label} · {tierKnown}/4</strong><p>总进度 <b>{progress}%</b> · 按词频顺序推进</p></div></div></section>
-    <section className="roadmap" id="roadmap">{(["high","mid","low"] as Tier[]).map((id,index)=><button key={id} className={`${tier===id?"active":""} ${TIER_IDS[id].every(w=>known.includes(w))?"done":""}`} onClick={e=>{e.stopPropagation();chooseTier(id)}}><span>{index+1}</span><div><strong>{TIERS[id].label}</strong><small>{TIERS[id].sub} · {TIER_IDS[id].filter(w=>known.includes(w)).length}/4</small></div>{index<2&&<i>→</i>}</button>)}</section>
-    <section className="study-shell" id="study"><article className="reading"><div className="article-meta"><span>{passage.eyebrow}</span><span>◷ 约 3 分钟</span></div><h2>{passage.title}</h2><div className="rule"/><div className="passage">{passage.lines.map((line,i)=><p key={i}>{line}</p>)}</div><p className="hint"><span>↖</span> 点击标记的单词，先结合上下文猜意思</p><div className="context-question"><span>语境小问</span><p>{passage.question}</p><details><summary>查看答案</summary><p>{passage.answer}</p></details></div></article>
-    <aside className="word-card" id="words"><div className="word-head"><span>{TIERS[current.tier].label} · {ORDER.indexOf(active)+1}/12</span><button onClick={e=>{e.stopPropagation();toggleSaved()}}>{saved.includes(active)?"★":"☆"}</button></div><h3>{current.word}</h3><p className="phonetic">{current.phonetic} <button className="voice-button" onClick={e=>{e.stopPropagation();playRecording()}} aria-label={`播放 ${current.word} 的真人发音`}><i>▶</i> 真人发音</button></p><div className="meaning"><strong>{current.meaning}</strong><p>{current.note}</p></div><div className="example"><small>换个语境</small><p>{current.example}</p><span>{current.translation}</span></div><div className="actions"><button className="ghost" onClick={e=>{e.stopPropagation();toggleSaved()}}>{saved.includes(active)?"已收藏":"加入生词本"}</button><button className="primary" onClick={e=>{e.stopPropagation();markKnown()}}>我记住了 →</button></div><div className="dots">{TIER_IDS[tier].map(id=><button key={id} className={id===active?"active":known.includes(id)?"known":""} data-word={id}/>)}</div></aside></section>
-    <section className="continue"><div><span>学习顺序</span><h2>{tier==="high"?"完成高频词后，自动进入中频词。":tier==="mid"?"稳住中频词，再挑战低频词。":"完成最后一组，开始循环复习。"}</h2></div><button onClick={()=>{const next:Tier=tier==="high"?"mid":tier==="mid"?"low":"high";chooseTier(next);document.querySelector("#study")?.scrollIntoView({behavior:"smooth"})}}>下一阶段 <span>→</span></button></section>
-    <footer><span>语境 · 让词汇有故事</span><span>发音录音来自 <a href="https://commons.wikimedia.org" target="_blank" rel="noreferrer">Wikimedia Commons</a> · CC BY-SA</span></footer>{toast&&<div className="toast" role="status">✓ {toast}</div>}
+  return <main className="app-shell">
+    <header className="app-header"><a className="brand" href="#" onClick={()=>setView("learn")}><span>境</span><div>语境<small>高中 3500 词</small></div></a><nav>{([['learn','学习'],['reading','读文章'],['book','生词本'],['library','全部词库']] as [View,string][]).map(([id,label])=><button key={id} className={view===id?"active":""} onClick={()=>setView(id)}>{label}{id==="book"&&saved.length>0?<b>{saved.length}</b>:null}</button>)}</nav><div className="streak">✦ 连续 12 天</div></header>
+    {view==="learn"&&<><section className="dashboard"><div><p className="eyebrow">今日学习 · {stage}阶段</p><h1>在语境里，<em>真正记住</em>每一个词。</h1><p>完整收录 {words.length||"3,674"} 个高考标注词条，按词频从高到低学习。</p></div><div className="overall"><strong>{known.length}</strong><span>/ {words.length||3674} 已掌握</span><div><i style={{width:`${words.length?known.length/words.length*100:0}%`}}/></div></div></section><section className="daily-strip"><div><span>今日 20 词</span><strong>{Math.min(known.filter(w=>daily.some(d=>d.w===w)).length,20)} / 20</strong></div>{daily.map((w,i)=><button key={w.w} className={`${active===w.w?"active":""} ${known.includes(w.w)?"known":""}`} onClick={()=>setActive(w.w)}><small>{i+1}</small>{w.w}</button>)}</section><StudyCard display={display} index={index} total={words.length} stage={stage} saved={saved.includes(active)} loading={loadingAudio} onAudio={playAudio} onSave={toggleSaved} onKnow={markKnown}/><section className="reading-teaser"><div><p className="eyebrow">语境阅读</p><h2>把今天的词放回一篇文章里</h2><p>文章中的每个英文单词都能点击查询和收藏。</p></div><button onClick={()=>setView("reading")}>开始阅读 →</button></section></>}
+    {view==="reading"&&<section className="reader-layout"><div className="article-list">{ARTICLES.map((a,i)=><button key={a.title} className={article===i?"active":""} onClick={()=>setArticle(i)}><small>{a.tag}</small><strong>{a.title}</strong><span>{a.cn}</span></button>)}</div><article className="reader"><p className="eyebrow">{ARTICLES[article].tag} · 全文可点词</p><h1>{ARTICLES[article].title}</h1><h2>{ARTICLES[article].cn}</h2><div className="article-copy"><ClickableText text={ARTICLES[article].text} map={map} onWord={selectWord}/></div><p className="reader-hint">轻触任何英文单词，即可在右侧查看并学习</p></article><StudyCard compact display={display} index={index} total={words.length} stage={stage} saved={saved.includes(active)} loading={loadingAudio} onAudio={playAudio} onSave={toggleSaved} onKnow={markKnown}/></section>}
+    {view==="book"&&<WordGrid title="我的生词本" subtitle={`已收藏 ${saved.length} 个词，点击继续学习`} words={saved.map(w=>map.get(w)).filter(Boolean) as Vocab[]} known={known} onWord={w=>{setActive(w);setView("learn")}} empty="还没有生词。阅读文章时，点击单词并加入生词本。"/>}
+    {view==="library"&&<section className="library"><div className="library-head"><div><p className="eyebrow">完整高考词库</p><h1>{words.length.toLocaleString()} 个词条</h1><p>按现代语料词频排列：高频 → 中频 → 低频</p></div><label>⌕<input value={query} onChange={e=>{setQuery(e.target.value);setLimit(60)}} placeholder="搜索英文或中文释义"/></label></div><WordGrid words={search} known={known} onWord={w=>{setActive(w);setView("learn")}} empty="没有找到这个词。"/>{search.length<(query?words.filter(w=>w.w.includes(query.toLowerCase())||w.t.includes(query)).length:words.length)&&<button className="load-more" onClick={()=>setLimit(x=>x+60)}>加载更多</button>}</section>}
+    <footer><span>语境 · 高中英语 3500 词</span><span>词典数据：ECDICT（MIT） · 发音：Wikimedia Commons / Dictionary API</span></footer>{toast&&<div className="toast">✓ {toast}</div>}
   </main>;
 }
+
+function StudyCard({display,index,total,stage,saved,loading,onAudio,onSave,onKnow,compact=false}:{display:Vocab|null;index:number;total:number;stage:string;saved:boolean;loading:boolean;onAudio:()=>void;onSave:()=>void;onKnow:()=>void;compact?:boolean}){
+  if(!display)return <aside className={`study-card ${compact?"compact":""}`}><p>词库加载中…</p></aside>;
+  return <aside className={`study-card ${compact?"compact":""}`}><div className="card-top"><span>{stage}词 · {Math.max(index+1,1)}/{total||3674}</span><button onClick={onSave} aria-label="收藏">{saved?"★":"☆"}</button></div><h2>{display.w}</h2><div className="pronounce"><span>{display.p||"音标整理中"}</span><button onClick={onAudio} disabled={loading}>{loading?"加载中…":"▶ 真人发音"}</button></div><div className="definition"><strong>{display.t||"暂无中文释义"}</strong>{display.d&&<p>{display.d}</p>}</div><div className="card-actions"><button onClick={onSave}>{saved?"已加入生词本":"我不认识"}</button><button className="know" onClick={onKnow}>我认识 →</button></div></aside>;
+}
+
+function WordGrid({title,subtitle,words,known,onWord,empty}:{title?:string;subtitle?:string;words:Vocab[];known:string[];onWord:(w:string)=>void;empty:string}){return <section className="word-section">{title&&<div className="section-title"><p className="eyebrow">复习</p><h1>{title}</h1><p>{subtitle}</p></div>}{!words.length?<div className="empty">{empty}</div>:<div className="word-grid">{words.map((w,i)=><button key={w.w} onClick={()=>onWord(w.w)}><small>{i+1}</small><div><strong>{w.w}</strong><span>{w.p}</span><p>{w.t.split(/[；\n]/)[0]}</p></div><i>{known.includes(w.w)?"✓":"→"}</i></button>)}</div>}</section>}
