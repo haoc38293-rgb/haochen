@@ -8,3 +8,21 @@
 .tools-page{max-width:1120px;margin:55px auto 100px}.tools-title{margin-bottom:30px}.tools-title h1{font-size:42px;margin:12px 0}.tools-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}.calendar-card,.generator-card,.generated-article{background:var(--white);border:1px solid var(--line);padding:32px}.tool-head{display:flex;justify-content:space-between;align-items:start;margin-bottom:25px}.tool-head h2{font-size:23px;margin:9px 0 0}.tool-head>strong{font:700 30px Arial,sans-serif;color:var(--green);text-align:right}.tool-head>strong small{display:block;font-size:9px;color:#929891;margin-top:4px}.tool-head>span{font:10px Arial,sans-serif;color:#939891}.weekdays,.calendar-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:5px}.weekdays span{text-align:center;font:9px Arial,sans-serif;color:#999;padding:5px}.calendar-grid>div{aspect-ratio:1;display:grid;place-items:center;position:relative;border-radius:50%;font:12px Arial,sans-serif}.calendar-grid>div.today{outline:1px solid #9cac9f}.calendar-grid>div.checked{background:var(--green);color:#fff}.calendar-grid i{position:absolute;right:1px;bottom:0;width:14px;height:14px;display:grid;place-items:center;border-radius:50%;background:#c39a49;color:#fff;font-size:8px;font-style:normal}.checkin-button,.generate-button{width:100%;border:0;background:var(--green);color:#fff;padding:13px;margin-top:22px;cursor:pointer;font:700 12px Arial,sans-serif}.checkin-button:disabled{background:#9aab9f}.generator-card textarea{width:100%;min-height:205px;resize:vertical;border:1px solid var(--line);background:#faf9f4;padding:16px;outline:none;font:14px/1.8 Arial,sans-serif}.generator-error{color:#a3634b;font:11px Arial,sans-serif}.generated-article{margin-top:18px;padding:42px 50px}.generated-head{display:flex;justify-content:space-between;align-items:center}.generated-head h2{font-size:31px;margin:9px 0 25px}.generated-head button{border:1px solid #9caf9f;background:var(--sage);color:var(--green);padding:9px 14px;border-radius:30px;font:700 11px Arial,sans-serif;cursor:pointer}.target-chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:30px;padding-top:25px;border-top:1px solid var(--line)}.target-chips button{border:1px solid var(--line);background:#f4f1e7;padding:9px 12px;display:grid;text-align:left;cursor:pointer}.target-chips strong{font:14px Georgia,serif}.target-chips span{font:9px Arial,sans-serif;color:#77837b;margin-top:3px;max-width:150px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 @media(max-width:900px){.tools-page{margin:35px 16px 90px}.tools-title h1{font-size:34px}.tools-grid{grid-template-columns:1fr}.generated-article{padding:32px 24px}}
 @media(max-width:560px){.app-header nav button{padding:0 3px;font-size:9px}.calendar-card,.generator-card{padding:25px 20px}.generated-head{display:block}.generated-head button{margin-bottom:22px}.generated-article .article-copy{font-size:16px}.tools-title h1{font-size:30px}}
+
+/* Deep Sea Night Reading — selected background */
+body{
+  min-height:100vh;
+  background-color:#071d25;
+  background-image:linear-gradient(rgba(4,20,27,.16),rgba(4,20,27,.34)),url("/deep-sea-night-reading.png");
+  background-size:cover;
+  background-position:center;
+  background-attachment:fixed;
+}
+.app-header{background:rgba(247,247,240,.94);border-bottom-color:rgba(255,255,255,.2)}
+.dashboard h1,.library-head h1,.section-title h1,.review-head h1,.review-done h1,.tools-title h1,.reading-teaser h2{color:#f7fbf6;text-shadow:0 2px 18px rgba(0,0,0,.28)}
+.dashboard>div>p:last-child,.library-head p,.section-title p,.review-head>div>p:last-child,.tools-title p,.reading-teaser p:last-child{color:#d1ded9}
+.eyebrow{color:#d5bd83}
+.reading-teaser,footer{border-color:rgba(255,255,255,.24)}
+footer{color:#c2d0cc}
+.daily-strip,.overall,.study-card,.reader,.word-grid>button,.empty,.library-head label,.dictation-card,.review-done,.calendar-card,.generator-card,.generated-article{box-shadow:0 22px 65px rgba(0,8,15,.22)}
+@media(max-width:900px){body{background-attachment:scroll}.app-header nav{background:rgba(255,253,248,.97)}}
